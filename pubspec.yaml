@@ -7,6 +7,9 @@ version: 0.1.0
 environment:
   sdk: ^3.13.4
 
+executables:
+  sortdart: sort_dart_members
+
 # Add regular dependencies here.
 dependencies:
   analyzer: ^14.4.0
