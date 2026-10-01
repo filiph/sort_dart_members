@@ -125,7 +125,7 @@ void main(List<String> arguments) {
 }
 
 /// If you change this, also change the version in pubspec.yaml.
-const String version = '0.1.0';
+const String version = '0.1.1';
 
 ArgParser buildParser() {
   return ArgParser()
@@ -163,7 +163,7 @@ ArgParser buildParser() {
 
 void printUsage(ArgParser argParser, {bool toStderr = true}) {
   final out = toStderr ? stderr : stdout;
-  out.writeln('Usage: sort_dart_members [options] <file-path>');
+  out.writeln('Usage: sortdart [options] <file-path>');
   out.writeln('');
   out.writeln('Options:');
   out.writeln(argParser.usage);

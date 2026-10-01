@@ -6,8 +6,8 @@ provided by the Dart LSP server
 There is no guarantee that this tool will always follow the official
 behavior, but that is how we started.
 
-**Disclaimer:** Almost all of the code is built by LLMs.
-This is both simple enough and uncreative enough that I have no trouble
+**Disclaimer:** Almost all of the code in this package is built by LLMs.
+This project is both simple enough and uncreative enough that I have no trouble
 outsourcing the work to a tool.
 
 
@@ -42,3 +42,19 @@ If you want to apply the sorting in place, use `--overwrite` (`-w`):
 sortdart --overwrite path/to/file.dart
 ```
 
+### Other options
+
+This is the output of `sortdart --help` as of October 2026.
+
+```text
+sortdart --help
+Usage: sort_dart_members [options] <file-path>
+
+Options:
+    --check                           Check if the file is already sorted without modifying it.
+-w, --overwrite                       Overwrite the file with sorted contents.
+    --[no-]sort-constructors-first    Sort constructors before fields (defaults to false).
+-v, --verbose                         Show verbose diagnostic logging on stderr.
+-h, --help                            Print this usage information.
+    --version                         Print the tool version.
+```
