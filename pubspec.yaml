@@ -1,0 +1,22 @@
+name: sort_dart_members
+description: A sample command-line application with basic argument parsing.
+# If you change this, also change the version in bin/sort_dart_members.dart.
+version: 0.1.0
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.13.4
+
+# Add regular dependencies here.
+dependencies:
+  analyzer: ^14.4.0
+  analyzer_plugin: ^0.14.17
+  args: ^2.7.0
+  logging: ^1.3.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  path: ^1.9.0
+  test: ^1.25.6
+  test_descriptor: ^2.0.1
+  test_process: ^2.1.0
