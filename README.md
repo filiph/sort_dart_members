@@ -22,3 +22,23 @@ dart pub global activate sort_dart_members
 In order to simply check if a file is already sorted:
 
 ```sh
+sortdart path/to/file.dart --check
+```
+
+This only outputs whether or not that file is already sorted,
+and also expresses the same result with an exit code (0 = sorted, 1 = not).
+
+If you want to see what the file will look like:
+
+```sh
+sortdart path/to/file.dart
+```
+
+This will output the sorted file to stdout.
+
+If you want to apply the sorting in place, use `--overwrite` (`-w`):
+
+```sh
+sortdart --overwrite path/to/file.dart
+```
+
