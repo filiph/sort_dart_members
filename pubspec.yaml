@@ -2,7 +2,7 @@ name: sort_dart_members
 description: A sample command-line application with basic argument parsing.
 # If you change this, also change the version in bin/sort_dart_members.dart.
 version: 0.1.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/filiph/sort_dart_members
 
 environment:
   sdk: ^3.13.4
