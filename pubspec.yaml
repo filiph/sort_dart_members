@@ -3,7 +3,7 @@ description: >
   A command line tool for sorting members in Dart files.
   Mimics official Dart LSP behavior.
 # If you change this, also change the version in bin/sort_dart_members.dart.
-version: 0.1.1
+version: 0.1.1+1
 repository: https://github.com/filiph/sort_dart_members
 
 environment:
