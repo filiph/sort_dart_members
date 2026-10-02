@@ -1,3 +1,5 @@
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 A command line tool for sorting Dart members in a `.dart` file.
 
 Mimics the behavior of the official 'Sort Members in Dart File' IDE helper
