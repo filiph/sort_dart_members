@@ -1,4 +1,4 @@
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+[![No Maintenance Intended](https://unmaintained.tech/badge.svg)](https://unmaintained.tech/)
 
 A command line tool for sorting Dart members in a `.dart` file.
 
@@ -41,7 +41,7 @@ This will output the sorted file to stdout.
 If you want to apply the sorting in place, use `--overwrite` (`-w`):
 
 ```sh
-sortdart --overwrite path/to/file.dart
+sortdart -w path/to/file.dart
 ```
 
 ### Other options
