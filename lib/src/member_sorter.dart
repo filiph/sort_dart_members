@@ -379,7 +379,8 @@ class MemberSorter {
   }
 }
 
-/// Exception thrown when the source file contains syntax errors that prevent sorting.
+/// Exception thrown when the source file contains syntax errors
+/// that prevent sorting.
 class MemberSortException implements Exception {
   final String message;
   final List<Diagnostic> errors;

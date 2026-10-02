@@ -13,7 +13,8 @@ class TokenWithOptionalComma {
 }
 
 /// Extension on [RangeFactory] providing AST node range calculations
-/// that properly incorporate leading doc/code comments and trailing inline comments.
+/// that properly incorporate leading doc/code comments and trailing
+/// inline comments.
 extension RangeUtilsExtension on RangeFactory {
   /// Return the left-most comment immediately before the [token] that is not on
   /// the same line as the first non-comment token before the [token]. Return

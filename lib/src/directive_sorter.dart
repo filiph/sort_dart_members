@@ -6,7 +6,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/source/line_info.dart';
 
 /// Compares two URI strings for a directive to produce the desired sort order.
-int compareDirectiveUri(String a, String b) {
+int _compareDirectiveUri(String a, String b) {
   if (!a.startsWith('package:') || !b.startsWith('package:')) {
     if (!a.startsWith('/') && !b.startsWith('/')) {
       return a.compareTo(b);
@@ -20,16 +20,16 @@ int compareDirectiveUri(String a, String b) {
   return a.substring(indexA + 1).compareTo(b.substring(indexB + 1));
 }
 
-String docCommentLinePrefix(String lineText) {
+String _docCommentLinePrefix(String lineText) {
   var match = RegExp(r'^\s*(?:///|\*)\s?').firstMatch(lineText);
   return match?.group(0) ?? '/// ';
 }
 
-List<DocCommentLine> docCommentLines(Comment docComment, String code) {
+List<_DocCommentLine> _docCommentLines(Comment docComment, String code) {
   var tokens = docComment.tokens;
   if (tokens.length == 1 && !tokens.single.lexeme.startsWith('///')) {
     var token = tokens.single;
-    var lines = <DocCommentLine>[];
+    var lines = <_DocCommentLine>[];
     var lineStart = token.offset;
     for (var i = token.offset; i < token.end; i++) {
       if (code.codeUnitAt(i) == 0x0A) {
@@ -37,29 +37,29 @@ List<DocCommentLine> docCommentLines(Comment docComment, String code) {
         if (lineEnd > lineStart && code.codeUnitAt(lineEnd - 1) == 0x0D) {
           lineEnd--;
         }
-        lines.add(DocCommentLine(lineStart, lineEnd));
+        lines.add(_DocCommentLine(lineStart, lineEnd));
         lineStart = i + 1;
       }
     }
-    lines.add(DocCommentLine(lineStart, token.end));
+    lines.add(_DocCommentLine(lineStart, token.end));
     return lines;
   }
-  return [for (var token in tokens) DocCommentLine(token.offset, token.end)];
+  return [for (var token in tokens) _DocCommentLine(token.offset, token.end)];
 }
 
-bool isBlankCommentLine(String text) {
+bool _isBlankCommentLine(String text) {
   var trimmed = text.trim();
   return trimmed == '///' || trimmed == '*';
 }
 
-Map<DocCommentLine, DocImport> mapDocImportsToLines(
+Map<_DocCommentLine, DocImport> _mapDocImportsToLines(
   Comment docComment,
   String code,
 ) {
   var docImports = docComment.docImports;
-  var docImportByLine = <DocCommentLine, DocImport>{};
+  var docImportByLine = <_DocCommentLine, DocImport>{};
   var docImportIndex = 0;
-  for (var line in docCommentLines(docComment, code)) {
+  for (var line in _docCommentLines(docComment, code)) {
     if (docImportIndex >= docImports.length) {
       break;
     }
@@ -74,20 +74,25 @@ Map<DocCommentLine, DocImport> mapDocImportsToLines(
 
 /// Organizes and sorts directives at the compilation unit level.
 class DirectiveSorter {
+  /// The original code.
   final String initialCode;
+
+  /// The compilation unit of the original code.
   final CompilationUnit unit;
 
-  String code;
-  late final String endOfLine;
+  String _code;
 
-  DirectiveSorter(this.initialCode, this.unit) : code = initialCode {
-    endOfLine = getEOL(code);
+  late final String _endOfLine;
+
+  /// Instantiates a new instance of [DirectiveSorter].
+  DirectiveSorter(this.initialCode, this.unit) : _code = initialCode {
+    _endOfLine = getEOL(_code);
   }
 
   /// Sorts all directives (library, imports, exports, parts) and doc imports.
   String sort() {
     _organizeDirectives();
-    return code;
+    return _code;
   }
 
   /// Organize all [Directive]s.
@@ -104,17 +109,17 @@ class DirectiveSorter {
         int? libraryDocsAndAnnotationsEndOffset;
         var uriContent = directive.uri.stringValue ?? '';
         var priority = switch (directive) {
-          ImportDirective() => DirectiveSortPriority(
+          ImportDirective() => _DirectiveSortPriority(
             uriContent,
-            DirectiveSortKind.import,
+            _DirectiveSortKind.import,
           ),
-          ExportDirective() => DirectiveSortPriority(
+          ExportDirective() => _DirectiveSortPriority(
             uriContent,
-            DirectiveSortKind.export,
+            _DirectiveSortKind.export,
           ),
-          PartDirective() => DirectiveSortPriority(
+          PartDirective() => _DirectiveSortPriority(
             uriContent,
-            DirectiveSortKind.part,
+            _DirectiveSortKind.part,
           ),
         };
 
@@ -139,7 +144,7 @@ class DirectiveSorter {
             var nextLineOffset = lineInfo.getOffsetOfLineAfter(
               libraryDocsAndAnnotationsEndOffset,
             );
-            if (code
+            if (_code
                 .substring(libraryDocsAndAnnotationsEndOffset, nextLineOffset)
                 .trim()
                 .isEmpty) {
@@ -173,7 +178,7 @@ class DirectiveSorter {
           end = trailingComment.end;
         }
         offset = libraryDocsAndAnnotationsEndOffset ?? offset;
-        var text = code.substring(offset, end);
+        var text = _code.substring(offset, end);
         directives.add(
           _DirectiveInfo(directive, priority, uriContent, offset, end, text),
         );
@@ -196,23 +201,23 @@ class DirectiveSorter {
     String directivesCode;
     {
       var sb = StringBuffer();
-      DirectiveSortPriority? currentPriority;
+      _DirectiveSortPriority? currentPriority;
       for (var directiveInfo in directives) {
         if (currentPriority != directiveInfo.priority) {
           if (currentPriority != null) {
-            sb.write(endOfLine);
+            sb.write(_endOfLine);
           }
           currentPriority = directiveInfo.priority;
         }
         sb.write(directiveInfo.text);
-        sb.write(endOfLine);
+        sb.write(_endOfLine);
       }
       directivesCode = sb.toString().trimRight();
     }
 
-    var beforeDirectives = code.substring(0, firstDirectiveOffset);
-    var afterDirectives = code.substring(lastDirectiveEnd);
-    code = beforeDirectives + directivesCode + afterDirectives;
+    var beforeDirectives = _code.substring(0, firstDirectiveOffset);
+    var afterDirectives = _code.substring(lastDirectiveEnd);
+    _code = beforeDirectives + directivesCode + afterDirectives;
   }
 
   /// Sorts the `@docImport` directives in the documentation comment of
@@ -227,8 +232,8 @@ class DirectiveSorter {
       return;
     }
 
-    var lines = docCommentLines(docComment, code);
-    var docImportByLine = mapDocImportsToLines(docComment, code);
+    var lines = _docCommentLines(docComment, _code);
+    var docImportByLine = _mapDocImportsToLines(docComment, _code);
 
     var isBlockComment =
         docComment.tokens.length == 1 &&
@@ -242,13 +247,13 @@ class DirectiveSorter {
       for (var entry in docImportByLine.entries)
         _DocImportInfo(
           entry.value,
-          code.substring(entry.key.offset, entry.key.end),
+          _code.substring(entry.key.offset, entry.key.end),
         ),
     ]..sort();
 
-    var blankLine = docCommentLinePrefix(sortedInfos.first.text).trimRight();
+    var blankLine = _docCommentLinePrefix(sortedInfos.first.text).trimRight();
     var sortedTexts = <String>[];
-    DirectiveSortPriority? previousPriority;
+    _DirectiveSortPriority? previousPriority;
     for (var info in sortedInfos) {
       if (previousPriority != null && previousPriority != info.priority) {
         sortedTexts.add(blankLine);
@@ -263,32 +268,32 @@ class DirectiveSorter {
     bool isBlankLineBetweenDocImports(int index) =>
         index > firstDocImportIndex &&
         index < lastDocImportIndex &&
-        isBlankCommentLine(
-          code.substring(lines[index].offset, lines[index].end),
+        _isBlankCommentLine(
+          _code.substring(lines[index].offset, lines[index].end),
         );
 
     var newLines = [
       for (var i = 0; i < firstDocImportIndex; i++)
-        code.substring(lines[i].offset, lines[i].end),
+        _code.substring(lines[i].offset, lines[i].end),
       ...sortedTexts,
       for (var i = lastDocImportIndex + 1; i < lines.length; i++)
         if (!isBlankLineBetweenDocImports(i))
-          code.substring(lines[i].offset, lines[i].end),
+          _code.substring(lines[i].offset, lines[i].end),
     ];
 
-    code =
-        code.substring(0, docComment.offset) +
-        newLines.join(endOfLine) +
-        code.substring(docComment.end);
+    _code =
+        _code.substring(0, docComment.offset) +
+        newLines.join(_endOfLine) +
+        _code.substring(docComment.end);
   }
 
   void _organizeDocImportsInBlockComment(
     Comment docComment,
-    List<DocCommentLine> lines,
-    Map<DocCommentLine, DocImport> docImportByLine,
+    List<_DocCommentLine> lines,
+    Map<_DocCommentLine, DocImport> docImportByLine,
   ) {
-    String rawContent(DocCommentLine line) {
-      var lineText = code.substring(line.offset, line.end);
+    String rawContent(_DocCommentLine line) {
+      var lineText = _code.substring(line.offset, line.end);
       var match = RegExp(r'^\s*(?:\*|/\*\*)\s?(.*?)(\s*\*/)?$')
           .firstMatch(lineText);
       return match?.group(1) ?? lineText;
@@ -300,7 +305,7 @@ class DirectiveSorter {
     ]..sort();
 
     var sortedContents = <String>[];
-    DirectiveSortPriority? previousPriority;
+    _DirectiveSortPriority? previousPriority;
     for (var info in sortedInfos) {
       if (previousPriority != null && previousPriority != info.priority) {
         sortedContents.add('');
@@ -315,8 +320,8 @@ class DirectiveSorter {
     bool isBlankLineBetweenDocImports(int index) =>
         index > firstDocImportIndex &&
         index < lastDocImportIndex &&
-        isBlankCommentLine(
-          code.substring(lines[index].offset, lines[index].end),
+        _isBlankCommentLine(
+          _code.substring(lines[index].offset, lines[index].end),
         );
 
     var otherContents = [
@@ -346,10 +351,10 @@ class DirectiveSorter {
       ' */',
     ];
 
-    code =
-        code.substring(0, docComment.offset) +
-        newLines.join(endOfLine) +
-        code.substring(docComment.end);
+    _code =
+        _code.substring(0, docComment.offset) +
+        newLines.join(_endOfLine) +
+        _code.substring(docComment.end);
   }
 
   /// Return the EOL to use for [code].
@@ -440,75 +445,9 @@ class DirectiveSorter {
   }
 }
 
-/// The kind of directive for sorting purposes.
-enum DirectiveSortKind { import, export, part }
-
-/// The priority used for grouping directives when sorting.
-class DirectiveSortPriority {
-  static const importSdk = DirectiveSortPriority._('IMPORT_SDK', 0);
-  static const importPkg = DirectiveSortPriority._('IMPORT_PKG', 1);
-  static const importOther = DirectiveSortPriority._('IMPORT_OTHER', 2);
-  static const importRel = DirectiveSortPriority._('IMPORT_REL', 3);
-  static const exportSdk = DirectiveSortPriority._('EXPORT_SDK', 4);
-  static const exportPkg = DirectiveSortPriority._('EXPORT_PKG', 5);
-  static const exportOther = DirectiveSortPriority._('EXPORT_OTHER', 6);
-  static const exportRel = DirectiveSortPriority._('EXPORT_REL', 7);
-  static const part = DirectiveSortPriority._('PART', 8);
-
-  final String name;
-  final int ordinal;
-
-  factory DirectiveSortPriority(String uri, DirectiveSortKind kind) {
-    switch (kind) {
-      case DirectiveSortKind.import:
-        if (uri.startsWith('dart:')) {
-          return DirectiveSortPriority.importSdk;
-        } else if (uri.startsWith('package:')) {
-          return DirectiveSortPriority.importPkg;
-        } else if (uri.contains('://')) {
-          return DirectiveSortPriority.importOther;
-        } else {
-          return DirectiveSortPriority.importRel;
-        }
-      case DirectiveSortKind.export:
-        if (uri.startsWith('dart:')) {
-          return DirectiveSortPriority.exportSdk;
-        } else if (uri.startsWith('package:')) {
-          return DirectiveSortPriority.exportPkg;
-        } else if (uri.contains('://')) {
-          return DirectiveSortPriority.exportOther;
-        } else {
-          return DirectiveSortPriority.exportRel;
-        }
-      case DirectiveSortKind.part:
-        return DirectiveSortPriority.part;
-    }
-  }
-
-  const DirectiveSortPriority._(this.name, this.ordinal);
-
-  @override
-  String toString() => name;
-}
-
-/// A single physical line within a documentation comment.
-class DocCommentLine {
-  final int offset;
-  final int end;
-
-  const DocCommentLine(this.offset, this.end);
-
-  @override
-  int get hashCode => Object.hash(offset, end);
-
-  @override
-  bool operator ==(Object other) =>
-      other is DocCommentLine && other.offset == offset && other.end == end;
-}
-
 class _DirectiveInfo implements Comparable<_DirectiveInfo> {
   final UriBasedDirective directive;
-  final DirectiveSortPriority priority;
+  final _DirectiveSortPriority priority;
   final String uri;
   final int offset;
   final int end;
@@ -526,7 +465,7 @@ class _DirectiveInfo implements Comparable<_DirectiveInfo> {
   @override
   int compareTo(_DirectiveInfo other) {
     if (priority == other.priority) {
-      var compare = compareDirectiveUri(uri, other.uri);
+      var compare = _compareDirectiveUri(uri, other.uri);
       if (compare != 0) {
         return compare;
       }
@@ -539,22 +478,88 @@ class _DirectiveInfo implements Comparable<_DirectiveInfo> {
   String toString() => '(priority=$priority; text=$text)';
 }
 
+/// The kind of directive for sorting purposes.
+enum _DirectiveSortKind { import, export, part }
+
+/// The priority used for grouping directives when sorting.
+class _DirectiveSortPriority {
+  static const importSdk = _DirectiveSortPriority._('IMPORT_SDK', 0);
+  static const importPkg = _DirectiveSortPriority._('IMPORT_PKG', 1);
+  static const importOther = _DirectiveSortPriority._('IMPORT_OTHER', 2);
+  static const importRel = _DirectiveSortPriority._('IMPORT_REL', 3);
+  static const exportSdk = _DirectiveSortPriority._('EXPORT_SDK', 4);
+  static const exportPkg = _DirectiveSortPriority._('EXPORT_PKG', 5);
+  static const exportOther = _DirectiveSortPriority._('EXPORT_OTHER', 6);
+  static const exportRel = _DirectiveSortPriority._('EXPORT_REL', 7);
+  static const part = _DirectiveSortPriority._('PART', 8);
+
+  final String name;
+  final int ordinal;
+
+  factory _DirectiveSortPriority(String uri, _DirectiveSortKind kind) {
+    switch (kind) {
+      case _DirectiveSortKind.import:
+        if (uri.startsWith('dart:')) {
+          return _DirectiveSortPriority.importSdk;
+        } else if (uri.startsWith('package:')) {
+          return _DirectiveSortPriority.importPkg;
+        } else if (uri.contains('://')) {
+          return _DirectiveSortPriority.importOther;
+        } else {
+          return _DirectiveSortPriority.importRel;
+        }
+      case _DirectiveSortKind.export:
+        if (uri.startsWith('dart:')) {
+          return _DirectiveSortPriority.exportSdk;
+        } else if (uri.startsWith('package:')) {
+          return _DirectiveSortPriority.exportPkg;
+        } else if (uri.contains('://')) {
+          return _DirectiveSortPriority.exportOther;
+        } else {
+          return _DirectiveSortPriority.exportRel;
+        }
+      case _DirectiveSortKind.part:
+        return _DirectiveSortPriority.part;
+    }
+  }
+
+  const _DirectiveSortPriority._(this.name, this.ordinal);
+
+  @override
+  String toString() => name;
+}
+
+/// A single physical line within a documentation comment.
+class _DocCommentLine {
+  final int offset;
+  final int end;
+
+  const _DocCommentLine(this.offset, this.end);
+
+  @override
+  int get hashCode => Object.hash(offset, end);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _DocCommentLine && other.offset == offset && other.end == end;
+}
+
 class _DocImportInfo implements Comparable<_DocImportInfo> {
-  final DirectiveSortPriority priority;
+  final _DirectiveSortPriority priority;
   final String uri;
   final String text;
 
   _DocImportInfo(DocImport docImport, this.text)
     : uri = docImport.import.uri.stringValue ?? '',
-      priority = DirectiveSortPriority(
+      priority = _DirectiveSortPriority(
         docImport.import.uri.stringValue ?? '',
-        DirectiveSortKind.import,
+        _DirectiveSortKind.import,
       );
 
   @override
   int compareTo(_DocImportInfo other) {
     if (priority == other.priority) {
-      var compare = compareDirectiveUri(uri, other.uri);
+      var compare = _compareDirectiveUri(uri, other.uri);
       if (compare != 0) {
         return compare;
       }

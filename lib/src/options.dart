@@ -3,7 +3,8 @@ class SortOptions {
   /// The path to the Dart source file to sort.
   final String filePath;
 
-  /// Whether to run in verification mode without modifying files or emitting sorted code.
+  /// Whether to run in verification mode without modifying files
+  /// or emitting sorted code.
   final bool check;
 
   /// Whether to overwrite the target file in place.
